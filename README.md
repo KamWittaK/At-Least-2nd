@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # mock-hacklanta
 
 This template should help get you started developing with Vue 3 in Vite.
@@ -36,3 +37,6 @@ npm run dev
 ```sh
 npm run build
 ```
+=======
+# At-Least-2nd
+>>>>>>> a35f8e7fa7bbc85dddb1bf1e5ce67021ed935a34
