@@ -1,42 +1,83 @@
-<<<<<<< HEAD
-# mock-hacklanta
+# 🎰 The House
 
-This template should help get you started developing with Vue 3 in Vite.
+## 💡 Overview
 
-## Recommended IDE Setup
+The House is a financial gamification platform that turns discretionary income into an engaging casino-style experience—without the traditional downside of losing money.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+Instead of mindless gambling, every outcome contributes to your financial progress.
 
-## Recommended Browser Setup
+- 🟢 **Wins** → Become guilt-free spending money  
+- 🔴 **Losses** → Automatically routed into long-term investments  
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+This transforms financial discipline into something interactive, rewarding, and habit-forming.
 
-## Customize configuration
+---
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## 🎯 Problem
 
-## Project Setup
+Saving money often feels:
+- Slow
+- Boring
+- Restrictive
 
-```sh
+As a result, many people:
+- Overspend
+- Avoid investing
+- Struggle to stay consistent with financial goals
+
+---
+
+## 🧠 Solution
+
+The House reframes money management by introducing:
+
+> **A “gambling bank account” for your surplus income**
+
+Users:
+1. Direct deposit income
+2. Allocate a portion of **discretionary funds**
+3. Play casino-style games with that money
+
+But here’s the twist:
+
+> **You never truly lose**
+
+Losses are redirected into an S&P 500-style investment simulation, building long-term wealth behind the scenes.
+
+---
+
+## 🔥 Key Features
+
+- 🎲 **Casino-style gameplay**
+  - Interactive, high-energy experience
+  - Designed to keep users engaged
+
+- 💸 **Smart Money Routing**
+  - Wins → Spendable cash
+  - Losses → Investments
+
+- 🧮 **Investment Simulation**
+  - Tracks long-term growth of “lost” funds
+  - Encourages a future-focused mindset
+
+- 🧠 **Behavioral Finance Design**
+  - Turns saving into a habit loop
+  - Provides instant feedback + emotional engagement
+
+---
+
+## 🏗️ Tech Stack
+
+- Gemini 
+- Vue 3
+- Vite
+- Pinia (state management)
+- JavaScript
+
+---
+
+## 🚀 Getting Started
+
+```bash
 npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
 npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
-=======
-# At-Least-2nd
->>>>>>> a35f8e7fa7bbc85dddb1bf1e5ce67021ed935a34
