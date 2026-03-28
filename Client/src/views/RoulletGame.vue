@@ -186,7 +186,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useHackStore } from '../../../src/stores/index.js'
+import { useHackStore } from '../stores/index.js'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
