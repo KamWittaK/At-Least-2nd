@@ -16,7 +16,9 @@ export const useHackStore = defineStore('hack', () => {
   ])
 
   const savingGoal = computed(() => balance.value * (savingPercentage.value / 100))
-  const availableToPlay = computed(() => Math.max(0, sessionBudget.value - savings.value - spendings.value))
+  const availableToPlay = computed(
+    () => Math.max(0, sessionBudget.value - savings.value - spendings.value),
+  )
   const maxPlayableBet = computed(() => Math.max(0, Math.min(balance.value, availableToPlay.value)))
 
   const goalReached = computed(() => savings.value >= savingGoal.value)

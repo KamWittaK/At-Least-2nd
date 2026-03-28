@@ -26,15 +26,14 @@ const router = createRouter({
     {
       path: '/games/blackjack',
       name: 'blackjack',
-      component: BlackJackGame
+      component: BlackJackGame,
     },
     {
-      path: '/games/overunder',
-      alias: 'overunder',
+      path: '/games/over-under',
+      alias: '/games/overunder',
       name: 'overunder',
       component: OverUnderGame,
     },
-
   ],
 })
 
