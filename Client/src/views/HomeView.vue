@@ -297,7 +297,7 @@ defineExpose({
       <!-- Slider -->
       <div class="goal-section">
         <div class="goal-label">
-          <span>🎯 RISK CAP</span>
+          <span>🎯 RISK CAP: </span>
           <span class="goal-value">{{ savingsPercentage }}%</span>
         </div>
         <input

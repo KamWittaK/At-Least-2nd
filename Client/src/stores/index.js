@@ -10,7 +10,7 @@ export const useHackStore = defineStore('hack', () => {
   const trashTalks = ref([
     'Broken toaster smarter than you.',
     'Your code slower than Internet Explorer.',
-    'Your code is a rust bucket.',
+    'Does your mom know you have a spending problem',
     'Kindergarten coders outperform your skills.',
     'Spaghetti has better logic than you.',
   ])
