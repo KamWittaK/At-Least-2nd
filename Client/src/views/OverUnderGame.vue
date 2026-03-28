@@ -6,15 +6,10 @@
 
     <section class="game-shell">
       <header class="hero">
-        <div>
+        <div class="hero-copy-block">
           <p class="eyebrow">Three Card Guessing</p>
           <h1>Over Under</h1>
-          <p class="hero-copy">
-            Ante one unit, read the first card, then decide whether the three-card total will
-            finish over 23 or under 18.
-          </p>
         </div>
-
         <div class="hero-actions">
           <button class="ghost-btn" @click="router.push('/wheel')">Back to Wheel</button>
           <button class="ghost-btn" @click="resetRound">Reset Round</button>
@@ -23,49 +18,6 @@
 
       <section class="layout">
         <section class="table-card">
-          <div class="table-head">
-            <div>
-              <p class="section-label">Shoe</p>
-              <h2>{{ deckCount }} Decks</h2>
-            </div>
-
-            <div class="deck-switcher">
-              <button
-                v-for="count in deckOptions"
-                :key="count"
-                class="deck-btn"
-                :class="{ active: deckCount === count }"
-                :disabled="roundState === 'decision'"
-                @click="setDeckCount(count)"
-              >
-                {{ count }}
-              </button>
-            </div>
-          </div>
-
-          <div class="stats-grid">
-            <article class="stat-panel">
-              <span>Ante</span>
-              <strong>{{ formatChips(anteBet) }}</strong>
-            </article>
-            <article class="stat-panel">
-              <span>House Savings</span>
-              <strong>{{ formatChips(savings) }}</strong>
-            </article>
-            <article class="stat-panel">
-              <span>Spendings</span>
-              <strong>{{ formatChips(spendings) }}</strong>
-            </article>
-            <article class="stat-panel">
-              <span>Available</span>
-              <strong>{{ formatChips(availableToPlay) }}</strong>
-            </article>
-            <article class="stat-panel">
-              <span>Cards Left</span>
-              <strong>{{ shoe.length }}</strong>
-            </article>
-          </div>
-
           <div class="bet-rail">
             <p class="section-label">Choose Unit Size</p>
             <p v-if="availableToPlay <= 0" class="bankroll-warning">
@@ -115,6 +67,63 @@
               </button>
             </div>
           </div>
+
+          <div class="table-head">
+            <div>
+              <p class="section-label">Shoe</p>
+              <h2>{{ deckCount }} Decks</h2>
+            </div>
+
+            <div class="deck-switcher">
+              <button
+                v-for="count in deckOptions"
+                :key="count"
+                class="deck-btn"
+                :class="{ active: deckCount === count }"
+                :disabled="roundState === 'decision'"
+                @click="setDeckCount(count)"
+              >
+                {{ count }}
+              </button>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <article class="stat-panel">
+              <span>Ante</span>
+              <strong>{{ formatChips(anteBet) }}</strong>
+            </article>
+            <article class="stat-panel">
+              <span>Spendings</span>
+              <strong>{{ formatChips(spendings) }}</strong>
+            </article>
+            <article class="stat-panel">
+              <span>Available</span>
+              <strong>{{ formatChips(availableToPlay) }}</strong>
+            </article>
+            <article class="stat-panel">
+              <span>Cards Left</span>
+              <strong>{{ shoe.length }}</strong>
+            </article>
+          </div>
+
+          <div class="bankroll-panel">
+            <div class="bankroll-head">
+              <p class="section-label">Session Bankroll</p>
+              <strong>{{ formatChips(sessionBudget) }}</strong>
+            </div>
+            <div class="bankroll-bar" aria-hidden="true">
+              <div class="bankroll-fill available" :style="{ width: `${availablePercent}%` }" />
+              <div class="bankroll-fill spendings" :style="{ width: `${spendingsPercent}%` }" />
+              <div class="bankroll-fill savings" :style="{ width: `${savingsPercent}%` }" />
+            </div>
+            <div class="bankroll-legend">
+              <span><i class="legend-swatch available"></i>In Limbo</span>
+              <span><i class="legend-swatch spendings"></i>Spendings</span>
+              <span><i class="legend-swatch savings"></i>Savings</span>
+            </div>
+          </div>
+
         </section>
 
         <section class="table-card board-card">
@@ -137,7 +146,12 @@
             </div>
 
             <div class="card-lane">
-              <article v-for="(card, index) in displayCards" :key="`slot-${index}`" class="card-slot">
+              <article
+                v-for="(card, index) in displayCards"
+                :key="`slot-${index}`"
+                class="card-slot"
+                :class="cardSlotState(index, card)"
+              >
                 <img v-if="card" :src="card.image" :alt="card.label" class="playing-card" />
                 <div v-else class="card-back">
                   <span>HOUSE</span>
@@ -149,14 +163,53 @@
               <div class="bet-spot ante-spot">
                 <span class="spot-label">Ante</span>
                 <strong>{{ anteBet ? `$${anteBet}` : '1 UNIT' }}</strong>
+                <Transition name="spot-chip">
+                  <div
+                    v-if="anteBet > 0"
+                    class="placed-chip-stack"
+                    :style="{ '--chip-color': chipColor(anteBet || selectedChip) }"
+                  >
+                    <span class="placed-chip">
+                      <span class="placed-chip-face">
+                        <span class="placed-chip-amount">${{ anteBet }}</span>
+                      </span>
+                    </span>
+                  </div>
+                </Transition>
               </div>
               <div class="bet-spot over-spot" :class="{ selected: chosenSide === 'over' }">
                 <span class="spot-label">Over</span>
                 <strong>24+</strong>
+                <Transition name="spot-chip">
+                  <div
+                    v-if="chosenSide === 'over' && sideBet > 0"
+                    class="placed-chip-stack"
+                    :style="{ '--chip-color': chipColor(sideBet) }"
+                  >
+                    <span class="placed-chip">
+                      <span class="placed-chip-face">
+                        <span class="placed-chip-amount">${{ sideBet }}</span>
+                      </span>
+                    </span>
+                  </div>
+                </Transition>
               </div>
               <div class="bet-spot under-spot" :class="{ selected: chosenSide === 'under' }">
                 <span class="spot-label">Under</span>
                 <strong>17-</strong>
+                <Transition name="spot-chip">
+                  <div
+                    v-if="chosenSide === 'under' && sideBet > 0"
+                    class="placed-chip-stack"
+                    :style="{ '--chip-color': chipColor(sideBet) }"
+                  >
+                    <span class="placed-chip">
+                      <span class="placed-chip-face">
+                        <span class="placed-chip-amount">${{ sideBet }}</span>
+                      </span>
+                    </span>
+                  </div>
+                </Transition>
               </div>
               <div class="bet-spot fold-spot" :class="{ selected: chosenSide === 'fold' }">
                 <span class="spot-label">Fold</span>
@@ -181,7 +234,7 @@
           </div>
 
           <Transition name="fade">
-            <article v-if="statusMessage" class="status-card" :class="statusTone">
+            <article v-if="statusMessage" class="status-card" :class="[statusTone, { pulsing: isRevealing }]">
               <p class="section-label">Round Status</p>
               <h3>{{ statusTitle }}</h3>
               <p>{{ statusMessage }}</p>
@@ -194,7 +247,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useHackStore } from '../stores/index.js'
@@ -207,7 +260,7 @@ const cardModules = import.meta.glob('../assets/cards/*.svg', { eager: true, imp
 
 const router = useRouter()
 const hackStore = useHackStore()
-const { savings, spendings, availableToPlay, maxPlayableBet } = storeToRefs(hackStore)
+const { savings, spendings, sessionBudget, availableToPlay, maxPlayableBet } = storeToRefs(hackStore)
 
 const deckOptions = [4, 6, 8]
 const chips = [25, 50, 100, 250, 500]
@@ -224,6 +277,9 @@ const chosenSide = ref('')
 const statusTitle = ref('Make your ante to start.')
 const statusMessage = ref('Deal one card face up, then choose Fold, Over, or Under.')
 const statusTone = ref('neutral')
+const isRevealing = ref(false)
+
+let audioContext = null
 
 initializeShoe()
 
@@ -235,12 +291,16 @@ const displayCards = computed(() => {
 
 const allCards = computed(() => [firstCard.value, ...revealedCards.value].filter(Boolean))
 const totalValue = computed(() => allCards.value.reduce((sum, card) => sum + cardValue(card), 0))
+const availablePercent = computed(() => percentageOfBudget(availableToPlay.value))
+const spendingsPercent = computed(() => percentageOfBudget(spendings.value))
+const savingsPercent = computed(() => percentageOfBudget(savings.value))
 const canDealAnte = computed(
-  () => roundState.value === 'waiting' && selectedChip.value <= maxPlayableBet.value,
+  () => roundState.value === 'waiting' && !isRevealing.value && selectedChip.value <= maxPlayableBet.value,
 )
 const canChoose = computed(
   () =>
     roundState.value === 'decision' &&
+    !isRevealing.value &&
     anteBet.value > 0 &&
     hackStore.canRisk(anteBet.value, anteBet.value),
 )
@@ -316,6 +376,7 @@ function setDeckCount(count) {
 }
 
 function resetRound() {
+  if (isRevealing.value) return
   firstCard.value = null
   revealedCards.value = []
   anteBet.value = 0
@@ -327,20 +388,31 @@ function resetRound() {
   statusMessage.value = 'Deal one card face up, then choose Fold, Over, or Under.'
 }
 
-function dealAnte() {
+async function dealAnte() {
   if (!canDealAnte.value) return
 
   if (shoe.value.length < 12) initializeShoe()
 
+  isRevealing.value = true
   anteBet.value = selectedChip.value
-  firstCard.value = drawCard()
+  firstCard.value = null
   revealedCards.value = []
   sideBet.value = 0
   chosenSide.value = ''
-  roundState.value = 'decision'
+  roundState.value = 'dealing'
   statusTone.value = 'neutral'
+  statusTitle.value = 'Dealing first card...'
+  statusMessage.value = 'Ante posted. The house is sliding your first card onto the felt.'
+
+  await wait(220)
+  firstCard.value = drawCard()
+  playCardSlideSound(0.11)
+  await wait(260)
+
+  roundState.value = 'decision'
   statusTitle.value = `First card: ${firstCard.value.label}`
   statusMessage.value = `Match the ante with Over or Under, or fold and surrender the ante. Available: ${formatChips(availableToPlay.value)}.`
+  isRevealing.value = false
 }
 
 function foldHand() {
@@ -357,13 +429,26 @@ function foldHand() {
   anteBet.value = 0
 }
 
-function resolveHand(side) {
+async function resolveHand(side) {
   if (!canChoose.value) return
 
+  isRevealing.value = true
   chosenSide.value = side
   sideBet.value = anteBet.value
+  statusTitle.value = `Locking in ${side.toUpperCase()}`
+  statusMessage.value = 'Two more cards coming out of the shoe...'
 
-  revealedCards.value = [drawCard(), drawCard()]
+  revealedCards.value = []
+  roundState.value = 'dealing'
+
+  await wait(220)
+  revealedCards.value.push(drawCard())
+  playCardSlideSound(0.12)
+  await wait(320)
+  revealedCards.value.push(drawCard())
+  playCardSlideSound(0.12)
+  await wait(240)
+
   roundState.value = 'resolved'
 
   const total = totalValue.value
@@ -384,6 +469,7 @@ function resolveHand(side) {
 
   anteBet.value = 0
   sideBet.value = 0
+  isRevealing.value = false
 }
 
 function cardValue(card) {
@@ -419,6 +505,68 @@ function chipColor(chip) {
 
   return colors[chip] || '#c46c2b'
 }
+
+function percentageOfBudget(value) {
+  if (!sessionBudget.value) return 0
+  return Math.max(0, Math.min(100, (value / sessionBudget.value) * 100))
+}
+
+function cardSlotState(index, card) {
+  if (card) return 'is-live'
+  if (isRevealing.value) return 'is-waiting'
+  if (index === 0 && roundState.value !== 'waiting') return 'is-reserved'
+  return ''
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function getAudioContext() {
+  if (typeof window === 'undefined') return null
+  const Ctx = window.AudioContext || window.webkitAudioContext
+  if (!Ctx) return null
+  if (!audioContext) audioContext = new Ctx()
+  if (audioContext.state === 'suspended') audioContext.resume()
+  return audioContext
+}
+
+function playCardSlideSound(duration = 0.1) {
+  const ctx = getAudioContext()
+  if (!ctx) return
+
+  const now = ctx.currentTime
+  const gain = ctx.createGain()
+  const filter = ctx.createBiquadFilter()
+  const noiseBuffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * duration)), ctx.sampleRate)
+  const channelData = noiseBuffer.getChannelData(0)
+
+  for (let index = 0; index < channelData.length; index += 1) {
+    channelData[index] = (Math.random() * 2 - 1) * 0.55
+  }
+
+  const noiseSource = ctx.createBufferSource()
+  noiseSource.buffer = noiseBuffer
+
+  filter.type = 'bandpass'
+  filter.frequency.setValueAtTime(2100, now)
+  filter.frequency.exponentialRampToValueAtTime(900, now + duration)
+  filter.Q.setValueAtTime(0.8, now)
+
+  gain.gain.setValueAtTime(0.0001, now)
+  gain.gain.exponentialRampToValueAtTime(0.035, now + 0.012)
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration)
+
+  noiseSource.connect(filter)
+  filter.connect(gain)
+  gain.connect(ctx.destination)
+  noiseSource.start(now)
+  noiseSource.stop(now + duration)
+}
+
+onBeforeUnmount(() => {
+  if (audioContext && audioContext.state !== 'closed') audioContext.close()
+})
 </script>
 
 <style scoped>
@@ -431,7 +579,7 @@ function chipColor(chip) {
     linear-gradient(180deg, #09080f 0%, #14111d 45%, #09080f 100%);
   color: #fff6eb;
   font-family: 'Exo 2', sans-serif;
-  padding: 120px 20px 40px;
+  padding: 84px 20px 24px;
 }
 
 .bg-orb {
@@ -473,10 +621,17 @@ function chipColor(chip) {
 
 .hero {
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 30px;
+  margin-bottom: 14px;
+}
+
+.hero-copy-block {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
 .hero-actions {
@@ -494,9 +649,9 @@ function chipColor(chip) {
 }
 
 h1 {
-  font-size: clamp(3rem, 9vw, 5.5rem);
-  line-height: 0.92;
-  margin: 6px 0 0;
+  font-size: clamp(1.9rem, 5vw, 3rem);
+  line-height: 1;
+  margin: 0;
 }
 
 h2,
@@ -504,7 +659,6 @@ h3 {
   margin: 0;
 }
 
-.hero-copy,
 .decision-copy,
 .status-card p {
   color: rgba(255, 246, 235, 0.72);
@@ -523,7 +677,7 @@ h3 {
   border-radius: 28px;
   backdrop-filter: blur(18px);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
-  padding: 24px;
+  padding: 20px;
 }
 
 .table-head,
@@ -541,8 +695,7 @@ h3 {
   align-items: start;
 }
 
-.thresholds,
-.hero-copy {
+.thresholds {
   max-width: 500px;
 }
 
@@ -587,7 +740,6 @@ h3 {
 
 .deck-btn.active,
 .chip.active {
-  background: linear-gradient(135deg, rgba(255, 122, 61, 0.95), rgba(255, 61, 110, 0.95));
   box-shadow: 0 16px 34px rgba(255, 61, 110, 0.18);
 }
 
@@ -646,6 +798,7 @@ h3 {
 .chip.active {
   transform: translateY(-2px) scale(1.05);
   box-shadow:
+    0 0 0 4px rgba(255, 244, 214, 0.78),
     inset 0 0 0 6px rgba(0, 0, 0, 0.16),
     inset 0 0 0 12px rgba(255, 255, 255, 0.18),
     0 18px 32px rgba(255, 61, 110, 0.22);
@@ -698,6 +851,86 @@ button:disabled {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 24px;
+}
+
+.bankroll-panel {
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bankroll-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bankroll-head strong {
+  font-size: 1rem;
+}
+
+.bankroll-bar {
+  display: flex;
+  height: 16px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 12px;
+}
+
+.bankroll-fill {
+  height: 100%;
+  transition: width 0.35s ease;
+}
+
+.bankroll-fill.available {
+  background: linear-gradient(90deg, #11d4ff, #2e6bff);
+}
+
+.bankroll-fill.spendings {
+  background: linear-gradient(90deg, #20c575, #5ef0a6);
+}
+
+.bankroll-fill.savings {
+  background: linear-gradient(90deg, #ff7a3d, #ff3d6e);
+}
+
+.bankroll-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: rgba(255, 246, 235, 0.72);
+}
+
+.bankroll-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-swatch.available {
+  background: #2e6bff;
+}
+
+.legend-swatch.spendings {
+  background: #44d98e;
+}
+
+.legend-swatch.savings {
+  background: #ff5a5a;
 }
 
 .stat-panel,
@@ -787,6 +1020,42 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: translateY(0) scale(1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+}
+
+.card-slot.is-waiting {
+  animation: slotPulse 0.8s ease-in-out infinite;
+}
+
+.card-slot.is-live {
+  animation: cardReveal 0.38s cubic-bezier(0.21, 0.84, 0.27, 1);
+  box-shadow: 0 22px 32px rgba(0, 0, 0, 0.24);
+}
+
+.card-slot.is-reserved {
+  border-style: dashed;
+}
+
+@keyframes cardReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px) rotate(-6deg) scale(0.84);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes slotPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(17, 212, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(17, 212, 255, 0.18);
+  }
 }
 
 .bet-spots {
@@ -811,6 +1080,8 @@ button:disabled {
   text-align: center;
   padding: 14px;
   box-shadow: inset 0 0 0 10px rgba(255, 255, 255, 0.03);
+  position: relative;
+  overflow: hidden;
 }
 
 .bet-spot strong {
@@ -824,6 +1095,57 @@ button:disabled {
   font-size: 0.75rem;
   color: rgba(255, 241, 214, 0.7);
   margin-bottom: 8px;
+}
+
+.placed-chip-stack {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.3));
+}
+
+.placed-chip-stack::before {
+  content: '';
+  position: absolute;
+  inset: auto 6px -5px 6px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.24);
+  filter: blur(3px);
+}
+
+.placed-chip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.38), transparent 22%),
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.08) 0 38%, transparent 39%),
+    var(--chip-color);
+  border: 4px solid rgba(255, 247, 230, 0.8);
+  box-shadow:
+    inset 0 0 0 5px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 10px rgba(255, 255, 255, 0.15);
+}
+
+.placed-chip-face {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 10, 18, 0.22);
+  border: 2px solid rgba(255, 250, 240, 0.76);
+}
+
+.placed-chip-amount {
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #fffaf0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 .bet-spot.selected {
@@ -897,6 +1219,10 @@ button:disabled {
   padding: 20px;
 }
 
+.status-card.pulsing {
+  animation: statusPulse 0.8s ease-in-out infinite;
+}
+
 .status-card.win {
   border-color: rgba(17, 212, 255, 0.44);
 }
@@ -920,6 +1246,27 @@ button:disabled {
   transform: translateY(12px);
 }
 
+@keyframes statusPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
+  }
+}
+
+.spot-chip-enter-active,
+.spot-chip-leave-active {
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.spot-chip-enter-from,
+.spot-chip-leave-to {
+  opacity: 0;
+  transform: translateY(-18px) scale(0.88) rotate(-8deg);
+}
+
 @media (max-width: 980px) {
   .layout {
     grid-template-columns: 1fr;
@@ -931,6 +1278,10 @@ button:disabled {
   .table-head {
     flex-direction: column;
     align-items: start;
+  }
+
+  .hero-copy-block {
+    gap: 8px;
   }
 
   .thresholds {
