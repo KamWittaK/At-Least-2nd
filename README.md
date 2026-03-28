@@ -78,6 +78,17 @@ Losses are redirected into an S&P 500-style investment simulation, building long
 
 ## 🚀 Getting Started
 
+## Run Front-End
 ```bash
+cd client
 npm install
 npm run dev
+```
+
+## Run Back-End
+```bash
+cd server
+venv\Scripts\activate.bat
+python server.py
+```
+
