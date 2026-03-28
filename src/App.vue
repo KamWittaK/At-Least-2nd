@@ -10,7 +10,7 @@ import Header from './components/Header.vue';
     <div class="corner tr"></div>
     <div class="corner bl"></div>
     <div class="corner br"></div>
-  <Header /> 
+  <Header />  
   <RouterView />
   </main>
 </template>
