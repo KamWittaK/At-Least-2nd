@@ -95,11 +95,6 @@ const activeGame = computed(() => games[activeIndex.value])
           </div>
         </div>
 
-        <!-- center hub -->
-        <div class="hub">
-          <div class="hub-ring"/>
-          <div class="hub-ring hub-ring--2"/>
-        </div>
 
         <!-- floor reflection -->
         <div class="floor"/>
@@ -208,7 +203,7 @@ main {
 /* ── Nav buttons ── */
 .nav-btn {
   position: absolute;
-  top: 50%;
+  top: 80%;
   transform: translateY(-50%);
   z-index: 30;
   width: 44px; height: 44px;
@@ -231,8 +226,8 @@ main {
   transform: translateY(-50%) scale(1.1);
 }
 .nav-btn:disabled { opacity: .3; cursor: default; }
-.nav-prev { left: -22px; }
-.nav-next { right: -22px; }
+.nav-prev { right: 60%; }
+.nav-next { right: 30%; }
 
 /* pulse ring on nav buttons */
 .nav-btn::after {
