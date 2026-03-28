@@ -133,21 +133,6 @@
           </aside>
         </div>
       </section>
-
-      <footer class="table-footer">
-        <div class="legend-pill">
-          <span>Blackjack pays</span>
-          <strong>{{ BLACKJACK_PAYOUT }}x</strong>
-        </div>
-        <div class="legend-pill">
-          <span>Dealer stands on</span>
-          <strong>17</strong>
-        </div>
-        <div class="legend-pill">
-          <span>Bias var</span>
-          <strong>`HOUSE_EDGE_BIAS`</strong>
-        </div>
-      </footer>
     </section>
 
     <Transition name="toast">
@@ -663,7 +648,7 @@ resetDeck()
 .table-shell {
   position: relative;
   width: min(1180px, 100%);
-  max-height: calc(100vh - 96px);
+  height: fit-content;
   border-radius: 34px;
   border: 2px solid rgba(245, 208, 96, 0.45);
   background:
