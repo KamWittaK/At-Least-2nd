@@ -22,22 +22,37 @@ const showBubble = ref(true)
 let quipIndex = 0
 let quipTimer = null
 let talkTimer = null
+let cycleController = null
 
-function cycleQuip() {
-  // trigger talking animation
+async function cycleQuip(talkingTime) {
+  isTalking.value = true;
+  cycleController?.abort()
+  const controller = new AbortController()
+  cycleController = controller
+
+  const aborted = () => controller.signal.aborted
+
+  // 1. Show bubble and start talking immediately
+  quipIndex = (quipIndex + 1) % quips.length
+  currentQuip.value = quips[quipIndex];
+  showBubble.value = true
   isTalking.value = true
+
+  // 2. Talk for talkingTime
+  await sleep(talkingTime)
+  if (aborted()) return
+
+  // 3. Stop talking, hide bubble
+  isTalking.value = false
   showBubble.value = false
 
-  talkTimer = setTimeout(() => {
-    quipIndex = (quipIndex + 1) % quips.length
-    currentQuip.value = quips[quipIndex]
-    showBubble.value = true
-    setTimeout(() => { isTalking.value = false }, 800)
-  }, 400)
+  // 4. Pause before next quip
+  await sleep(400)
+  if (aborted()) return
 }
 
 onMounted(() => {
-  quipTimer = setInterval(cycleQuip, 5000)
+  quipTimer = setInterval(() => cycleQuip(5000), 5000)
 })
 
 onUnmounted(() => {
@@ -52,7 +67,7 @@ onUnmounted(() => {
 
     <div id="hud-right">
       <!-- ── AI Character ── -->
-      <div v-show="route.path.includes('games')" id="ai-character">
+      <div v-if="route.path.includes('games')" id="ai-character">
         <!-- Speech bubble -->
         <Transition name="bubble">
           <div v-if="showBubble" class="speech-bubble">
