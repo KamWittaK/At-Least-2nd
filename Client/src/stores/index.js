@@ -16,6 +16,9 @@ export const useHackStore = defineStore('hack', () => {
   const currentQuip = ref('')
   const isCharacterTalking = ref(false)
   const lastTrashTalkMessage = ref('')
+  // const goalReached = ref(false)
+  const savingGoal = ref(0)
+
   const trashTalks = ref([
     'Broken toaster smarter than you.',
     'Your code slower than Internet Explorer.',
@@ -24,7 +27,8 @@ export const useHackStore = defineStore('hack', () => {
     'Spaghetti has better logic than you.',
   ])
 
-  const savingGoal = computed(() => balance.value * (savingPercentage.value / 100))
+  // const savingGoal = computed(() => balance.value * (savingPercentage.value / 100))
+  
   const availableToPlay = computed(
     () => Math.max(0, sessionBudget.value - savings.value - spendings.value),
   )
