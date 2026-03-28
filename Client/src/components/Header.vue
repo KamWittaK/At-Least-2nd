@@ -1,11 +1,13 @@
 <script setup>
 import { useHackStore } from '../stores/index.js'
 import { useRoute, useRouter } from 'vue-router'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 
 const hackStore = useHackStore()
 const route = useRoute()
 const router = useRouter()
+const { balance, spendings, investedValue, lastMarketMove } = storeToRefs(hackStore)
 
 // AI character quips that cycle automatically
 const quips = [
@@ -22,6 +24,12 @@ const showBubble = ref(true)
 let quipIndex = 0
 let quipTimer = null
 let talkTimer = null
+let marketTimer = null
+
+const marketMoveLabel = computed(() => `${lastMarketMove.value >= 0 ? '+' : ''}${lastMarketMove.value.toFixed(2)}%`)
+const marketMoveClass = computed(() =>
+  lastMarketMove.value > 0 ? 'is-up' : lastMarketMove.value < 0 ? 'is-down' : 'is-flat',
+)
 
 function cycleQuip() {
   // trigger talking animation
@@ -38,10 +46,12 @@ function cycleQuip() {
 
 onMounted(() => {
   quipTimer = setInterval(cycleQuip, 5000)
+  marketTimer = setInterval(() => hackStore.advanceMarket(), 15000)
 })
 
 onUnmounted(() => {
   clearInterval(quipTimer)
+  clearInterval(marketTimer)
   clearTimeout(talkTimer)
 })
 </script>
@@ -84,15 +94,7 @@ onUnmounted(() => {
         <div class="coin-icon">✦</div>
         <div>
           <div id="balance-label">Balance</div>
-          <div id="balance-amount">${{ hackStore.balance.toFixed(2) }}</div>
-        </div>
-      </div>
-
-      <div v-show="route.path.includes('games')" id="balance-panel">
-        <div class="coin-icon">✦</div>
-        <div>
-          <div id="balance-label">Savings</div>
-          <div id="balance-amount">${{ hackStore.savings.toFixed(2) }}</div>
+          <div id="balance-amount">${{ balance.toFixed(2) }}</div>
         </div>
       </div>
 
@@ -100,7 +102,16 @@ onUnmounted(() => {
         <div class="coin-icon">✦</div>
         <div>
           <div id="balance-label">Spendings</div>
-          <div id="balance-amount">${{ hackStore.spendings.toFixed(2) }}</div>
+          <div id="balance-amount">${{ spendings.toFixed(2) }}</div>
+        </div>
+      </div>
+
+      <div id="balance-panel" class="invested-panel">
+        <div class="coin-icon">▲</div>
+        <div>
+          <div id="balance-label">Invested</div>
+          <div id="balance-amount">${{ investedValue.toFixed(2) }}</div>
+          <div class="market-move" :class="marketMoveClass">{{ marketMoveLabel }}</div>
         </div>
       </div>
 
@@ -150,6 +161,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.invested-panel {
+  min-width: 138px;
 }
 
 /* ── AI Character ── */
@@ -367,6 +382,26 @@ onUnmounted(() => {
   color: var(--gold);
   letter-spacing: .05em;
   text-shadow: 0 0 12px rgba(255,215,0,.6);
+}
+
+.market-move {
+  font-family: 'Share Tech Mono', monospace;
+  margin-top: 3px;
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.market-move.is-up {
+  color: #63f0af;
+}
+
+.market-move.is-down {
+  color: #ff9e86;
+}
+
+.market-move.is-flat {
+  color: rgba(255,255,255,.58);
 }
 
 /* ── Player badge ── */

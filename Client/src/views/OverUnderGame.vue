@@ -122,7 +122,7 @@
             <div class="bankroll-legend">
               <span><i class="legend-swatch available"></i>In Limbo</span>
               <span><i class="legend-swatch spendings"></i>Spendings</span>
-              <span><i class="legend-swatch savings"></i>Savings</span>
+              <span><i class="legend-swatch savings"></i>Invested</span>
             </div>
           </div>
 
@@ -581,7 +581,7 @@ onBeforeUnmount(() => {
     linear-gradient(180deg, #09080f 0%, #14111d 45%, #09080f 100%);
   color: #fff6eb;
   font-family: 'Exo 2', sans-serif;
-  padding: 84px 20px 24px;
+  padding: 96px 20px 24px;
 }
 
 .bg-orb {
@@ -652,7 +652,7 @@ onBeforeUnmount(() => {
 
 h1 {
   font-size: clamp(1.9rem, 5vw, 3rem);
-  line-height: 1;
+  line-height: 1.08;
   margin: 0;
 }
 
