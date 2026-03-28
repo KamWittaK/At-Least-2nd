@@ -23,25 +23,27 @@
             <p v-if="availableToPlay <= 0" class="bankroll-warning">
               You're broke for this session. Go allocate some money before you jump back in.
             </p>
-            <div class="chip-row">
-              <button
-                v-for="chip in chips"
-                :key="chip"
-                class="chip"
-                :class="{ active: selectedChip === chip }"
-                :style="{ '--chip-color': chipColor(chip) }"
-                :disabled="roundState !== 'waiting' || chip > maxPlayableBet"
-                @click="selectedChip = chip"
-              >
-                <span class="chip-face">
-                  <span class="chip-amount">${{ chip }}</span>
-                </span>
+            <div class="bet-controls">
+              <div class="chip-row">
+                <button
+                  v-for="chip in chips"
+                  :key="chip"
+                  class="chip"
+                  :class="{ active: selectedChip === chip }"
+                  :style="{ '--chip-color': chipColor(chip) }"
+                  :disabled="roundState !== 'waiting' || chip > maxPlayableBet"
+                  @click="selectedChip = chip"
+                >
+                  <span class="chip-face">
+                    <span class="chip-amount">${{ chip }}</span>
+                  </span>
+                </button>
+              </div>
+
+              <button class="primary-btn compact-deal-btn" :disabled="!canDealAnte" @click="dealAnte">
+                Deal First Card
               </button>
             </div>
-
-            <button class="primary-btn" :disabled="!canDealAnte" @click="dealAnte">
-              Deal First Card
-            </button>
           </div>
 
           <div class="decision-panel">
@@ -316,12 +318,12 @@ const decisionHeadline = computed(() => {
 })
 const decisionCopy = computed(() => {
   if (roundState.value === 'waiting') {
-    return 'Your ante is one unit. Over or Under must match that ante exactly.'
+    return 'Ante one unit to start.'
   }
   if (roundState.value === 'decision') {
-    return 'Fold loses the ante. Over wins at 24 or more. Under wins at 17 or less.'
+    return 'Fold loses ante. Over 24+, Under 17-.'
   }
-  return 'A winning call pays even money on both the ante and the matching side bet.'
+  return 'Wins pay even money on both wagers.'
 })
 
 function initializeShoe() {
@@ -714,6 +716,12 @@ h3 {
   flex-wrap: wrap;
 }
 
+.bet-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .deck-btn,
 .chip,
 .ghost-btn,
@@ -744,7 +752,8 @@ h3 {
 }
 
 .chip-row {
-  gap: 14px;
+  gap: 10px;
+  flex: 1;
 }
 
 .bankroll-warning {
@@ -760,8 +769,8 @@ h3 {
 
 .chip {
   padding: 0;
-  width: 78px;
-  height: 78px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background:
     radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.38), transparent 22%),
@@ -777,8 +786,8 @@ h3 {
 }
 
 .chip-face {
-  width: 50px;
-  height: 50px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -788,7 +797,7 @@ h3 {
 }
 
 .chip-amount {
-  font-size: 0.88rem;
+  font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.02em;
   color: #fffaf0;
@@ -818,10 +827,17 @@ h3 {
   box-shadow: 0 16px 34px rgba(46, 107, 255, 0.35);
 }
 
+.compact-deal-btn {
+  width: auto;
+  min-width: 156px;
+  min-height: 60px;
+  flex-shrink: 0;
+}
+
 .decision-btn {
   flex: 1;
   min-width: 110px;
-  min-height: 56px;
+  min-height: 48px;
   border-radius: 18px;
 }
 
@@ -964,7 +980,7 @@ button:disabled {
 .felt-table {
   position: relative;
   border-radius: 30px 30px 140px 140px;
-  padding: 22px 24px 30px;
+  padding: 18px 20px 24px;
   border: 2px solid rgba(244, 210, 110, 0.28);
   background:
     radial-gradient(circle at 50% 24%, rgba(255, 255, 255, 0.08), transparent 26%),
@@ -995,7 +1011,7 @@ button:disabled {
   font-weight: 700;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  margin-bottom: 22px;
+  margin-bottom: 16px;
   position: relative;
   z-index: 1;
 }
@@ -1003,9 +1019,9 @@ button:disabled {
 .card-lane {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin: 0 auto 26px;
-  max-width: 520px;
+  gap: 14px;
+  margin: 0 auto 18px;
+  max-width: 510px;
   position: relative;
   z-index: 1;
 }
@@ -1013,10 +1029,11 @@ button:disabled {
 .card-slot {
   aspect-ratio: 5 / 7;
   border-radius: 24px;
-  overflow: hidden;
+  overflow: visible;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  min-height: 220px;
+  min-height: 208px;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1063,13 +1080,13 @@ button:disabled {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   align-items: end;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
   position: relative;
   z-index: 1;
 }
 
 .bet-spot {
-  min-height: 118px;
+  min-height: 98px;
   border-radius: 999px;
   border: 3px solid rgba(244, 210, 110, 0.44);
   background: rgba(8, 37, 27, 0.34);
@@ -1078,14 +1095,14 @@ button:disabled {
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 14px;
+  padding: 10px;
   box-shadow: inset 0 0 0 10px rgba(255, 255, 255, 0.03);
   position: relative;
   overflow: hidden;
 }
 
 .bet-spot strong {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #fff8e7;
 }
 
@@ -1094,7 +1111,7 @@ button:disabled {
   letter-spacing: 0.18em;
   font-size: 0.75rem;
   color: rgba(255, 241, 214, 0.7);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .placed-chip-stack {
@@ -1118,8 +1135,8 @@ button:disabled {
   position: relative;
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background:
     radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.38), transparent 22%),
@@ -1132,8 +1149,8 @@ button:disabled {
 }
 
 .placed-chip-face {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -1142,7 +1159,7 @@ button:disabled {
 }
 
 .placed-chip-amount {
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   font-weight: 900;
   color: #fffaf0;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
@@ -1183,26 +1200,27 @@ button:disabled {
   background: rgba(0, 0, 0, 0.18);
   border: 1px solid rgba(244, 210, 110, 0.14);
   border-radius: 18px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   text-align: center;
 }
 
 .result-item strong {
   display: block;
-  margin-top: 8px;
-  font-size: 1.35rem;
+  margin-top: 6px;
+  font-size: 1.15rem;
 }
 
 .playing-card {
-  width: 100%;
-  height: 100%;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
   object-fit: contain;
   background: #fff;
+  border-radius: 18px;
 }
 
 .card-back {
-  width: calc(100% - 18px);
-  height: calc(100% - 18px);
+  width: 100%;
+  height: 100%;
   border-radius: 18px;
   display: grid;
   place-items: center;
@@ -1216,7 +1234,7 @@ button:disabled {
 }
 
 .status-card {
-  padding: 20px;
+  padding: 16px;
 }
 
 .status-card.pulsing {
@@ -1280,6 +1298,11 @@ button:disabled {
     align-items: start;
   }
 
+  .bet-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .hero-copy-block {
     gap: 8px;
   }
@@ -1295,7 +1318,7 @@ button:disabled {
   }
 
   .card-slot {
-    min-height: 300px;
+    min-height: 240px;
   }
 
   .stats-grid {
