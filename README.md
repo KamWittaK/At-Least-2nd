@@ -1,8 +1,8 @@
-# 🎰 At-Least-2nd
+# 🎰 The House
 
 ## 💡 Overview
 
-At-Least-2nd is a financial gamification platform that turns discretionary income into an engaging casino-style experience—without the traditional downside of losing money.
+The House is a financial gamification platform that turns discretionary income into an engaging casino-style experience—without the traditional downside of losing money.
 
 Instead of mindless gambling, every outcome contributes to your financial progress.
 
@@ -29,7 +29,7 @@ As a result, many people:
 
 ## 🧠 Solution
 
-At-Least-2nd reframes money management by introducing:
+The House reframes money management by introducing:
 
 > **A “gambling bank account” for your surplus income**
 
