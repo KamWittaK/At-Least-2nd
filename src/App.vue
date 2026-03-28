@@ -5,6 +5,11 @@ import Header from './components/Header.vue';
 
 <template>
   <main>
+     <!-- Corner decorations -->
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
   <Header />  
   <RouterView />
   </main>

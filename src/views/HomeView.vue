@@ -212,13 +212,8 @@ defineExpose({
       "
     ></div>
 
-    <!-- Corner decorations -->
-    <div class="corner tl"></div>
-    <div class="corner tr"></div>
-    <div class="corner bl"></div>
-    <div class="corner br"></div>
+    
 
-    <!-- HUD Top Bar -->
 
     <!-- Toast notification -->
     <div>
@@ -240,11 +235,11 @@ defineExpose({
 
       <div id="stats-bar">
         <div class="stat-item" style="--sd: 0.4s">
-          <div class="stat-value">${{ spendings }}</div>
+          <div class="stat-value">${{ spendings.toFixed(2) }}</div>
           <div class="stat-label">Spendings</div>
         </div>
         <div class="stat-item" style="--sd: 0.8s">
-          <div class="stat-value">${{ savings }}</div>
+          <div class="stat-value">${{ savings.toFixed(2) }}</div>
           <div class="stat-label">Savings</div>
         </div>
       </div>
@@ -1022,52 +1017,6 @@ main {
   }
 }
 
-/* ── CORNER DECORATIONS ── */
-.corner {
-  position: fixed;
-  width: 60px;
-  height: 60px;
-  pointer-events: none;
-  z-index: 5;
-}
-.corner::before,
-.corner::after {
-  content: '';
-  position: absolute;
-  background: var(--cyan);
-  opacity: 0.5;
-}
-.corner.tl {
-  top: 10px;
-  left: 10px;
-}
-.corner.tr {
-  top: 10px;
-  right: 10px;
-  transform: scaleX(-1);
-}
-.corner.bl {
-  bottom: 10px;
-  left: 10px;
-  transform: scaleY(-1);
-}
-.corner.br {
-  bottom: 10px;
-  right: 10px;
-  transform: scale(-1);
-}
-.corner::before {
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-}
-.corner::after {
-  top: 0;
-  left: 0;
-  width: 2px;
-  height: 100%;
-}
 
 /* ── BOTTOM HUD ── */
 #bottom-hud {

@@ -7,12 +7,12 @@ export const useHackStore = defineStore('hack', () => {
   const savings = ref(0)
   const savingPercentage = ref(0)
   const trashTalks = ref([
-    "I've seen more processing power in a broken smart toaster than in whatever you used to come up with this request.",
-    "Your code is so bad, it makes Internet Explorer look like a speed demon.",
-    "If your code were a car, it would be a rusted-out clunker that barely starts.",
-    "Your coding skills are so weak, they couldn't even hack it in a kindergarten programming class.",
-    "I've seen more logic in a bowl of spaghetti than in your code.",
-  ])
+  "Broken toaster smarter than you.",
+  "Your code slower than Internet Explorer.",
+  "Your code is a rust bucket.",
+  "Kindergarten coders outperform your skills.",
+  "Spaghetti has better logic than you."
+])
 
 
   const savingGoal = computed(() => balance.value * (savingPercentage.value / 100))
