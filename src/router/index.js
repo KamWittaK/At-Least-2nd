@@ -30,7 +30,8 @@ const router = createRouter({
     },
     {
       path: '/games/overunder',
-      name: 'over-under',
+      alias: 'overunder',
+      name: 'overunder',
       component: OverUnderGame,
     },
 

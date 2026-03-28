@@ -7,7 +7,7 @@ const router = useRouter()
 const games = [
   { name: 'Roulette Wheel', emoji: '🎡', color: '#00ff88', route: '/games/roulette', desc: 'Spin & Win' },
   { name: 'Blackjack',      emoji: '🃏', color: '#00cfff', route: '/games/blackjack', desc: 'Beat the Dealer' },
-  { name: 'Over Under',     emoji: '🎲', color: '#ff6b35', route: '/games/overunder', desc: 'High or Low?' },
+  { name: 'Over Under',     emoji: '🎲', color: '#ff6b35', route: '/games/over-under', desc: 'High or Low?' },
 ]
 
 const activeIndex = ref(0)

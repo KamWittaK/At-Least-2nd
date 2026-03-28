@@ -1,23 +1,23 @@
 <script setup>
-import { onMounted, ref, computed, onUnmounted } from 'vue'
+import { onMounted, ref, onUnmounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useHackStore } from '../stores/index.js'
 
 const router = useRouter()
 const hackStore = useHackStore()
+const { balance, spendings, savings, savingPercentage, sessionBudget, availableToPlay } =
+  storeToRefs(hackStore)
 
 // ======================
 // Reactive State
 // ======================
 const displayEnteringToast = ref(false)
 const loading = ref(false)
-const balance = ref(hackStore.balance)
-const spendings = ref(hackStore.spendings)
-const savings = ref(hackStore.savings)
 const showModal = ref(false)
 
 // Modal & Form State
-const savingsPercentage = ref(hackStore.savingPercentage )
+const savingsPercentage = ref(savingPercentage.value)
 
 // ======================
 // Live Clock
@@ -148,7 +148,7 @@ const closeModal = () => {
 }
 
 const startGame = () => {
-
+  hackStore.setSessionRisk(savingsPercentage.value)
 
   closeModal()
 
@@ -235,10 +235,18 @@ defineExpose({
 
       <div id="stats-bar">
         <div class="stat-item" style="--sd: 0.4s">
+          <div class="stat-value">${{ sessionBudget.toFixed(2) }}</div>
+          <div class="stat-label">Playable</div>
+        </div>
+        <div class="stat-item" style="--sd: 0.8s">
+          <div class="stat-value">${{ availableToPlay.toFixed(2) }}</div>
+          <div class="stat-label">In Limbo</div>
+        </div>
+        <div class="stat-item" style="--sd: 1.2s">
           <div class="stat-value">${{ spendings.toFixed(2) }}</div>
           <div class="stat-label">Spendings</div>
         </div>
-        <div class="stat-item" style="--sd: 0.8s">
+        <div class="stat-item" style="--sd: 1.6s">
           <div class="stat-value">${{ savings.toFixed(2) }}</div>
           <div class="stat-label">Savings</div>
         </div>
@@ -283,24 +291,24 @@ defineExpose({
       <button class="modal-close" @click="closeModal">✕</button>
 
       <div class="modal-eyebrow">mission briefing</div>
-      <h2>SET YOUR<br/>SAVINGS GOAL</h2>
-      <p class="modal-sub">How much of your income will you commit to saving?</p>
+      <h2>SET YOUR<br/>SESSION LIMIT</h2>
+      <p class="modal-sub">What percent of your paycheck can this session put at risk?</p>
 
       <!-- Slider -->
       <div class="goal-section">
         <div class="goal-label">
-          <span>🎯 TARGET</span>
-          <span class="goal-value">{{ hackStore.savingPercentage }}%</span>
+          <span>🎯 RISK CAP</span>
+          <span class="goal-value">{{ savingsPercentage }}%</span>
         </div>
         <input
-          v-model.number="hackStore.savingPercentage"
+          v-model.number="savingsPercentage"
           type="range" min="0" max="100"
-          :style="{ background: `linear-gradient(90deg, #00e5ff ${hackStore.savingPercentage}%, #1a1a3a ${hackStore.savingPercentage}%)` }"
+          :style="{ background: `linear-gradient(90deg, #00e5ff ${savingsPercentage}%, #1a1a3a ${savingsPercentage}%)` }"
         />
         <div class="xp-bar-wrap">
-          <span class="xp-bar-label">POWER</span>
+          <span class="xp-bar-label">PLAYABLE BANKROLL</span>
           <div class="xp-bar-track">
-            <div class="xp-bar-fill" :style="{ width: hackStore.savingPercentage + '%' }"/>
+            <div class="xp-bar-fill" :style="{ width: savingsPercentage + '%' }"/>
           </div>
         </div>
       </div>
@@ -314,6 +322,11 @@ defineExpose({
           placeholder="e.g. 40"
         />
       </div>
+
+      <p class="modal-sub">
+        Balance: ${{ balance.toFixed(2) }} · Session cap:
+        ${{ (balance * (savingsPercentage / 100)).toFixed(2) }}
+      </p>
 
       <button class="start-game-btn"  @click="startGame">
         ▶ &nbsp; ENTER THE ARENA
