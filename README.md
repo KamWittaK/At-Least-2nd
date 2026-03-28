@@ -68,6 +68,7 @@ Losses are redirected into an S&P 500-style investment simulation, building long
 
 ## 🏗️ Tech Stack
 
+- Gemini 
 - Vue 3
 - Vite
 - Pinia (state management)
