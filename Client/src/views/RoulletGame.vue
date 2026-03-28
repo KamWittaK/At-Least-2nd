@@ -181,16 +181,30 @@
         </div>
       </div>
     </Transition>
+
+    <Transition name="trash">
+      <div v-if="showTrashTalk" class="trash-talk">
+        <div class="trash-border-tl" />
+        <div class="trash-border-br" />
+        <span class="trash-icon">💀</span>
+        <span class="trash-text">{{ activeTrashTalk }}</span>
+        <span class="trash-icon">💀</span>
+      </div>
+    </Transition>
   </main>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useHackStore } from '../stores/index.js'
 import { useRouter } from 'vue-router'
 
+const API_BASE_URL = 'http://localhost:8000'
+
 const router = useRouter()
 const hackStore = useHackStore()
+const { lastTrashTalkMessage } = storeToRefs(hackStore)
 
 const NUMBERS = [
   0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14,
@@ -212,7 +226,11 @@ const lastResult = ref(null)
 const history = ref([])
 const toastMsg = ref('')
 const showCelebration = ref(false)
+const showTrashTalk = ref(false)
 let toastTimer = null
+let trashTimer = null
+let activeTrashAudio = null
+let activeTrashAudioUrl = null
 
 const chips = [5, 10, 25, 50, 100, 500]
 const dozenBets = [
@@ -236,6 +254,11 @@ const resultLabel = computed(() => {
   if (lastResult.value === 0) return 'ZERO'
   return RED_NUMS.has(lastResult.value) ? 'RED' : 'BLACK'
 })
+const fallbackTrashTalk = computed(() => {
+  const lines = hackStore.trashTalks || []
+  return lines[Math.floor(Math.random() * lines.length)] || 'The house still found a way to talk.'
+})
+const activeTrashTalk = computed(() => lastTrashTalkMessage.value || fallbackTrashTalk.value)
 
 function chipColor(c) {
   return (
@@ -310,6 +333,7 @@ function settle(num) {
   if (w > 0) {
     balance.value += w
     showToast(`🎉 You won ${w} chips!`)
+    triggerTrashTalk()
     hackStore.increamentSavings()
   } else {
     showToast('😢 No luck this time')
@@ -327,8 +351,131 @@ function settle(num) {
 
 function showToast(msg) {
   toastMsg.value = msg
+  if (msg.includes('No luck')) triggerTrashTalk()
   clearTimeout(toastTimer)
   toastTimer = setTimeout(() => (toastMsg.value = ''), 3000)
+}
+
+async function triggerTrashTalk() {
+  if (!toastMsg.value.includes('No luck')) return
+
+  const message = await fetchTrashTalkMessage()
+  const talkingTime = await playTrashTalk(message)
+
+  showTrashTalk.value = true
+  clearTimeout(trashTimer)
+  trashTimer = setTimeout(() => {
+    showTrashTalk.value = false
+  }, talkingTime + 250)
+}
+
+async function fetchTrashTalkMessage() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/trashtalk`)
+    if (!response.ok) throw new Error(`Trash talk request failed with ${response.status}`)
+
+    const data = await response.json()
+    const message = String(data.message || data.text || '').trim()
+    if (message) {
+      hackStore.setTrashTalkMessage(message)
+      return message
+    }
+  } catch (error) {
+    console.error('Error fetching trash talk:', error)
+  }
+
+  const fallbackMessage = activeTrashTalk.value
+  hackStore.setTrashTalkMessage(fallbackMessage)
+  return fallbackMessage
+}
+
+async function playTrashTalk(message) {
+  const normalizedMessage = String(message || '').trim()
+  if (!normalizedMessage) return 0
+
+  hackStore.setTrashTalkMessage(normalizedMessage)
+  stopTrashTalkPlayback()
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/tts?text=${encodeURIComponent(normalizedMessage)}`)
+    if (!response.ok) throw new Error(`TTS request failed with ${response.status}`)
+
+    const blob = await response.blob()
+    activeTrashAudioUrl = URL.createObjectURL(blob)
+    activeTrashAudio = new Audio(activeTrashAudioUrl)
+
+    const talkingTime = await getAudioDuration(activeTrashAudio)
+    hackStore.cycleQuip(talkingTime, normalizedMessage)
+
+    activeTrashAudio.addEventListener(
+      'ended',
+      () => {
+        hackStore.stopQuip()
+        cleanupAudioUrl()
+      },
+      { once: true },
+    )
+    activeTrashAudio.addEventListener(
+      'error',
+      () => {
+        hackStore.stopQuip()
+        cleanupAudioUrl()
+      },
+      { once: true },
+    )
+
+    await activeTrashAudio.play()
+    return talkingTime
+  } catch (error) {
+    console.error('Error playing trash talk audio:', error)
+    const fallbackDuration = estimateTalkingTime(normalizedMessage)
+    hackStore.cycleQuip(fallbackDuration, normalizedMessage)
+    return fallbackDuration
+  }
+}
+
+function getAudioDuration(audio) {
+  return new Promise((resolve) => {
+    const resolveDuration = () => {
+      const durationMs = Number.isFinite(audio.duration) ? Math.ceil(audio.duration * 1000) : 0
+      resolve(durationMs || estimateTalkingTime(lastTrashTalkMessage.value))
+    }
+
+    if (audio.readyState >= 1 && Number.isFinite(audio.duration) && audio.duration > 0) {
+      resolveDuration()
+      return
+    }
+
+    audio.addEventListener('loadedmetadata', resolveDuration, { once: true })
+    audio.addEventListener(
+      'error',
+      () => resolve(estimateTalkingTime(lastTrashTalkMessage.value)),
+      { once: true },
+    )
+  })
+}
+
+function estimateTalkingTime(message) {
+  return Math.max(2200, String(message || '').trim().length * 70)
+}
+
+function stopTrashTalkPlayback() {
+  hackStore.stopQuip()
+
+  if (activeTrashAudio) {
+    activeTrashAudio.pause()
+    activeTrashAudio.currentTime = 0
+    activeTrashAudio = null
+  }
+
+  cleanupAudioUrl()
+}
+
+function cleanupAudioUrl() {
+  if (activeTrashAudioUrl) {
+    URL.revokeObjectURL(activeTrashAudioUrl)
+    activeTrashAudioUrl = null
+  }
 }
 
 const ballStyle = computed(() => {
@@ -421,6 +568,9 @@ function drawWheel(angle = 0) {
 }
 onMounted(() => drawWheel(0))
 watch(wheelAngle, (v) => drawWheel(v))
+onUnmounted(() => {
+  stopTrashTalkPlayback()
+})
 
 const balloons = [
   { id: 1, emoji: '🎈', style: '--delay:0s;--x:8%;--size:3rem' },
@@ -1105,6 +1255,63 @@ main {
   to {
     opacity: 1;
   }
+}
+
+.trash-enter-active {
+  animation: fade-in 0.24s ease;
+}
+
+.trash-leave-active {
+  animation: fade-in 0.24s reverse;
+}
+
+.trash-talk {
+  position: fixed;
+  top: 10px;
+  left: 42%;
+  transform: translateX(-50%);
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(92vw, 760px);
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(18, 6, 6, 0.92);
+  border: 1px solid rgba(255, 94, 94, 0.35);
+  color: #ffe1e1;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
+  z-index: 111;
+}
+
+.trash-icon {
+  font-size: 1.25rem;
+}
+
+.trash-text {
+  line-height: 1.45;
+}
+
+.trash-border-tl,
+.trash-border-br {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: rgba(255, 184, 184, 0.45);
+}
+
+.trash-border-tl {
+  top: 8px;
+  left: 8px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+
+.trash-border-br {
+  right: 8px;
+  bottom: 8px;
+  border-right: 1px solid;
+  border-bottom: 1px solid;
 }
 
 @media (max-width: 520px) {

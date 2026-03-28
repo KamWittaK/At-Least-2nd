@@ -1,68 +1,13 @@
 <script setup>
+import { computed } from 'vue'
 import { useHackStore } from '@/stores'
 import { useRoute, useRouter } from 'vue-router'
-import { ref, onMounted, onUnmounted } from 'vue'
 
 const hackStore = useHackStore()
 const route = useRoute()
 const router = useRouter()
 
-const currentQuip = ref('')
-const isTalking = ref(false)
-const showBubble = ref(true)
-let cycleController = null
-
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
-
-async function fetchQuip() {
-  // TODO: replace with actual API call
-  // const response = await fetch('/api/trashtalk')
-  // const data = await response.json()
-  // return data.text
-
-  const quips = [
-    "Broken toaster smarter than you.",
-    "Your code slower than Internet Explorer.",
-    "Your code is a rust bucket.",
-    "Kindergarten coders outperform your skills.",
-    "Spaghetti has better logic than you."
-  ]
-  return quips[Math.floor(Math.random() * quips.length)]
-}
-
-async function cycleQuip(talkingTime) {
-  cycleController?.abort()
-  const controller = new AbortController()
-  cycleController = controller
-  const aborted = () => controller.signal.aborted
-
-  while (!aborted()) {
-    // 1. Fetch new quip from API
-    const quip = await fetchQuip()
-    if (aborted()) break
-
-    // 2. Assign text and start talking
-    currentQuip.value = quip
-    isTalking.value = true
-
-    // 3. Talk for talkingTime (character mimics reading)
-    await sleep(talkingTime)
-    if (aborted()) break
-
-    // 4. Stop talking, pause briefly before next fetch
-    isTalking.value = false
-    await sleep(1000)
-    if (aborted()) break
-  }
-}
-
-onMounted(() => {
-  cycleQuip(5000)
-})
-
-onUnmounted(() => {
-  cycleController?.abort()
-})
+const showBubble = computed(() => Boolean(hackStore.currentQuip))
 </script>
 
 <template>
@@ -74,24 +19,21 @@ onUnmounted(() => {
       <div v-if="route.path.includes('games')" id="ai-character">
         <!-- Speech bubble -->
         <Transition name="bubble">
-          <div v-if="showBubble" class="speech-bubble">
-            <span class="bubble-text">{{ currentQuip }}</span>
-          </div>
         </Transition>
 
         <!-- Character face -->
-        <div class="char-wrap" :class="{ talking: isTalking }">
+        <div class="char-wrap" :class="{ talking: hackStore.isCharacterTalking }">
           <!-- Outer glow ring -->
           <div class="char-ring"/>
           <!-- Face -->
           <div class="char-face">
             <!-- Eyes -->
             <div class="eyes">
-              <div class="eye" :class="{ blink: isTalking }"/>
-              <div class="eye" :class="{ blink: isTalking }"/>
+              <div class="eye" :class="{ blink: hackStore.isCharacterTalking }"/>
+              <div class="eye" :class="{ blink: hackStore.isCharacterTalking }"/>
             </div>
             <!-- Mouth — animates when talking -->
-            <div class="mouth" :class="{ open: isTalking }"/>
+            <div class="mouth" :class="{ open: hackStore.isCharacterTalking }"/>
           </div>
           <!-- Scanline overlay -->
           <div class="char-scanlines"/>

@@ -13,12 +13,24 @@
 
         <div class="table-stats">
           <div class="stat-pill">
+            <span>Balance</span>
+            <strong>{{ formatChips(balance) }}</strong>
+          </div>
+          <div class="stat-pill">
             <span>Bet</span>
             <strong>{{ formatChips(currentBet) }}</strong>
           </div>
+          <div class="stat-pill">
+            <span>Savings</span>
+            <strong>{{ formatChips(savings) }}</strong>
+          </div>
+          <div class="stat-pill">
+            <span>Spendings</span>
+            <strong>{{ formatChips(spendings) }}</strong>
+          </div>
           <div class="stat-pill accent">
-            <span>Savings %</span>
-            <strong>{{ Math.round(HOUSE_EDGE_BIAS * 100) }}%</strong>
+            <span>Available</span>
+            <strong>{{ formatChips(availableToPlay) }}</strong>
           </div>
         </div>
       </header>
@@ -91,7 +103,7 @@
                     class="chip"
                     :class="{ active: selectedChip === chip }"
                     :style="{ '--cc': chipColor(chip) }"
-                    :disabled="roundActive"
+                    :disabled="roundActive || chip > maxPlayableBet"
                     @click="selectedChip = chip"
                   >
                     {{ chip }}
@@ -160,7 +172,7 @@
         <div class="trash-border-tl" />
         <div class="trash-border-br" />
         <span class="trash-icon">💀</span>
-        <span class="trash-text">{{ trashTalk }}</span>
+        <span class="trash-text">{{ activeTrashTalk }}</span>
         <span class="trash-icon">💀</span>
       </div>
     </Transition>
@@ -168,7 +180,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useHackStore } from '../stores/index.js'
@@ -176,6 +188,7 @@ import { useHackStore } from '../stores/index.js'
 const BLACKJACK_PAYOUT = 1.5
 const HOUSE_EDGE_BIAS = 0.40
 const DEALER_STAND_SCORE = 17
+const API_BASE_URL = 'http://localhost:8000'
 
 const SUITS = ['clubs', 'diamonds', 'hearts', 'spades']
 const RANKS = ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king']
@@ -186,7 +199,8 @@ const cardModules = import.meta.glob('../assets/cards/*.svg', { eager: true, imp
 
 const router = useRouter()
 const hackStore = useHackStore()
-const { balance } = storeToRefs(hackStore)
+const { balance, lastTrashTalkMessage, savings, spendings, availableToPlay, maxPlayableBet } =
+  storeToRefs(hackStore)
 
 const currentBet = ref(0)
 const selectedChip = ref(50)
@@ -205,6 +219,8 @@ const confettiCanvas = ref(null)
 
 let toastTimer = null
 let trashTimer = null
+let activeTrashAudio = null
+let activeTrashAudioUrl = null
 
 const balloons = [
   { id: 1, emoji: '🎈', style: '--delay:0s;--x:10%;--size:3rem' },
@@ -214,10 +230,11 @@ const balloons = [
   { id: 5, emoji: '🎈', style: '--delay:.4s;--x:78%;--size:3.1rem' },
 ]
 
-const trashTalk = computed(() => {
+const fallbackTrashTalk = computed(() => {
   const lines = hackStore.trashTalks || []
   return lines[Math.floor(Math.random() * lines.length)] || 'The house still found a way to talk.'
 })
+const activeTrashTalk = computed(() => lastTrashTalkMessage.value || fallbackTrashTalk.value)
 
 const roundActive = computed(() => roundState.value === 'player' || roundState.value === 'dealer')
 const playerScore = computed(() => bestScore(playerHand.value))
@@ -364,6 +381,10 @@ function placeBet() {
     showToast('Not enough chips to place that bet.')
     return
   }
+  if (!hackStore.canRisk(selectedChip.value, currentBet.value)) {
+    showToast('That bet goes past your session limit.')
+    return
+  }
 
   balance.value -= selectedChip.value
   currentBet.value += selectedChip.value
@@ -473,6 +494,8 @@ function settleHands() {
 }
 
 function finishRound(outcome, message, payout, label) {
+  const settledBet = currentBet.value
+
   roundState.value = 'finished'
   roundOutcome.value = outcome
   roundMessage.value = message
@@ -481,14 +504,14 @@ function finishRound(outcome, message, payout, label) {
   if (payout > 0) balance.value += payout
 
   if (outcome === 'win') {
-    showToast(`You won ${Math.round(payout - currentBet.value)} chips.`)
-    triggerTrashTalk()
+    showToast(`You won ${Math.round(payout - settledBet)} chips.`)
+    hackStore.moveWinToSpendings(settledBet)
   } else if (outcome === 'push') {
     showToast('Push. Your bet is back on the rail.')
   } else {
     showToast('House wins this round.')
     triggerTrashTalk()
-    hackStore.increamentSavings()
+    hackStore.moveLossToSavings(settledBet)
   }
 
   currentBet.value = 0
@@ -505,12 +528,15 @@ function checkCelebration() {
   }, 5000)
 }
 
-function triggerTrashTalk() {
+async function triggerTrashTalk() {
+  const message = await fetchTrashTalkMessage()
+  const talkingTime = await playTrashTalk(message)
+
   showTrashTalk.value = true
   clearTimeout(trashTimer)
   trashTimer = setTimeout(() => {
     showTrashTalk.value = false
-  }, 3200)
+  }, talkingTime + 250)
 }
 
 function showToast(message) {
@@ -541,6 +567,116 @@ function wait(ms) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms)
   })
+}
+
+async function fetchTrashTalkMessage() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/trashtalk`)
+    if (!response.ok) throw new Error(`Trash talk request failed with ${response.status}`)
+
+    const data = await response.json()
+    const message = String(data.message || data.text || '').trim()
+    if (message) {
+      hackStore.setTrashTalkMessage(message)
+      return message
+    }
+  } catch (error) {
+    console.error('Error fetching trash talk:', error)
+  }
+
+  const fallbackMessage = activeTrashTalk.value
+  hackStore.setTrashTalkMessage(fallbackMessage)
+  return fallbackMessage
+}
+
+async function playTrashTalk(message) {
+  const normalizedMessage = String(message || '').trim()
+  if (!normalizedMessage) return 0
+
+  hackStore.setTrashTalkMessage(normalizedMessage)
+  stopTrashTalkPlayback()
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/tts?text=${encodeURIComponent(normalizedMessage)}`)
+    if (!response.ok) throw new Error(`TTS request failed with ${response.status}`)
+
+    const blob = await response.blob()
+    activeTrashAudioUrl = URL.createObjectURL(blob)
+    activeTrashAudio = new Audio(activeTrashAudioUrl)
+
+    const talkingTime = await getAudioDuration(activeTrashAudio)
+    hackStore.cycleQuip(talkingTime, normalizedMessage)
+
+    activeTrashAudio.addEventListener(
+      'ended',
+      () => {
+        hackStore.stopQuip()
+        cleanupAudioUrl()
+      },
+      { once: true },
+    )
+
+    activeTrashAudio.addEventListener(
+      'error',
+      () => {
+        hackStore.stopQuip()
+        cleanupAudioUrl()
+      },
+      { once: true },
+    )
+
+    await activeTrashAudio.play()
+    return talkingTime
+  } catch (error) {
+    console.error('Error playing trash talk audio:', error)
+    const fallbackDuration = estimateTalkingTime(normalizedMessage)
+    hackStore.cycleQuip(fallbackDuration, normalizedMessage)
+    return fallbackDuration
+  }
+}
+
+function getAudioDuration(audio) {
+  return new Promise((resolve) => {
+    const resolveDuration = () => {
+      const durationMs = Number.isFinite(audio.duration) ? Math.ceil(audio.duration * 1000) : 0
+      resolve(durationMs || estimateTalkingTime(lastTrashTalkMessage.value))
+    }
+
+    if (audio.readyState >= 1 && Number.isFinite(audio.duration) && audio.duration > 0) {
+      resolveDuration()
+      return
+    }
+
+    audio.addEventListener('loadedmetadata', resolveDuration, { once: true })
+    audio.addEventListener(
+      'error',
+      () => resolve(estimateTalkingTime(lastTrashTalkMessage.value)),
+      { once: true },
+    )
+  })
+}
+
+function estimateTalkingTime(message) {
+  return Math.max(2200, String(message || '').trim().length * 70)
+}
+
+function stopTrashTalkPlayback() {
+  hackStore.stopQuip()
+
+  if (activeTrashAudio) {
+    activeTrashAudio.pause()
+    activeTrashAudio.currentTime = 0
+    activeTrashAudio = null
+  }
+
+  cleanupAudioUrl()
+}
+
+function cleanupAudioUrl() {
+  if (activeTrashAudioUrl) {
+    URL.revokeObjectURL(activeTrashAudioUrl)
+    activeTrashAudioUrl = null
+  }
 }
 
 function launchConfetti() {
@@ -595,6 +731,10 @@ watch(showCelebration, (visible) => {
   if (visible) {
     window.setTimeout(launchConfetti, 60)
   }
+})
+
+onUnmounted(() => {
+  stopTrashTalkPlayback()
 })
 
 resetDeck()
@@ -1081,8 +1221,8 @@ button:disabled {
 
 .trash-talk {
   position: fixed;
-  top: 24px;
-  left: 50%;
+  top: 10px;
+  left: 42%;
   transform: translateX(-50%);
   z-index: 35;
   display: flex;
@@ -1095,6 +1235,7 @@ button:disabled {
   border: 1px solid rgba(255, 94, 94, 0.35);
   color: #ffe1e1;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
+  z-index: 111;
 }
 
 .trash-icon {

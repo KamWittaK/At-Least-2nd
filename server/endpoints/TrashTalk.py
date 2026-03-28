@@ -19,8 +19,15 @@ class TrashTalk:
         
         response = client.models.generate_content(
             model = "gemini-3.1-flash-lite-preview",
-            contents = "Generate a mean trash talk message for a gambling game. Be so mean to the user that it makes them cry. Return only the message without any additional text or formatting. Make it short and impactful."
-        )
+            contents = """Generate a short, sharp trash talk message for a gambling game. The tone should be ruthless, sarcastic, and humiliating, but remain within platform safety guidelines.
+
+Use witty insults about poor skill, bad luck, and embarrassing gameplay. Avoid threats, slurs, or references to family, protected groups, or real-world harm.
+
+Make the message feel intense and cutting, like a competitive opponent mocking a terrible performance.
+
+Keep it concise (1–2 sentences max) and impactful.
+
+Return only the message with no extra text or formatting.""")
 
         return response.text
 

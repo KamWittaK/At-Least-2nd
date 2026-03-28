@@ -137,6 +137,7 @@ const spawnBurstParticles = (el) => {
 
 const openModal = () => {
   showModal.value = true
+  savingsPercentage.value = savingPercentage.value
   // Reset values when opening
   // savingsPercent.value = 40
   // spendingPercent.value = 60
@@ -148,7 +149,15 @@ const closeModal = () => {
 }
 
 const startGame = () => {
-  hackStore.setSessionRisk(savingsPercentage.value)
+  const normalizedPercentage = Math.min(100, Math.max(0, Number(savingsPercentage.value) || 0))
+  const shouldResetProgress =
+    normalizedPercentage !== savingPercentage.value && (spendings.value > 0 || savings.value > 0)
+
+  if (shouldResetProgress) {
+    hackStore.resetSessionProgress()
+  }
+
+  hackStore.setSessionRisk(normalizedPercentage)
 
   closeModal()
 
