@@ -290,8 +290,11 @@ function animateWheel(from, to, dur, onDone) {
   })(performance.now())
 }
 
+
 function settle(num) {
   isSpinning.value = false
+
+  const totalWagered = totalBet.value  // ← capture BEFORE bets.value = {}
 
   let w = (bets.value['n' + num] || 0) * 36
   if (bets.value['red'] && RED_NUMS.has(num)) w += bets.value['red'] * 2
@@ -306,23 +309,31 @@ function settle(num) {
   if (bets.value['col1'] && num > 0 && num % 3 === 0) w += bets.value['col1'] * 3
   if (bets.value['col2'] && num > 0 && num % 3 === 2) w += bets.value['col2'] * 3
   if (bets.value['col3'] && num > 0 && num % 3 === 1) w += bets.value['col3'] * 3
-  bets.value = {}
+
+  bets.value = {}  // ← now safe to clear
+
   if (w > 0) {
     balance.value += w
     showToast(`🎉 You won ${w} chips!`)
-    hackStore.increamentSavings()
+    console.log('You won', w, 'chips')
+    hackStore.balance -= w;
+    hackStore.spendings += w;
+
   } else {
     showToast('😢 No luck this time')
-    hackStore.increamentSavings()
+    hackStore.balance -= totalWagered;  // ← use captured value to update store
+    hackStore.savings += totalWagered; 
   }
 
-  if (hackStore.goalReached) {
+  if(hackStore.savings >= hackStore.savingGoal) {
+    hackStore.goalReached = true;
     showCelebration.value = true
     setTimeout(() => {
       showCelebration.value = false
       router.push('/')
     }, 5000)
   }
+
 }
 
 function showToast(msg) {

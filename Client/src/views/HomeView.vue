@@ -47,6 +47,15 @@ const startLiveClock = () => {
 const openBox = (boxElement) => {
   if (!boxElement || boxElement.classList.contains('open')) return
 
+  if (hackStore.savingGoal > 0 && hackStore.savings >= hackStore.savingGoal) {
+    showToast.value = true
+    toastMessage.value = 'Come back when your pockets improve..'
+    setTimeout(() => {
+      showToast.value = false
+    }, 7000)
+    return
+  }
+
   boxElement.classList.add('open')
   spawnBurstParticles(boxElement)
 }
@@ -68,32 +77,10 @@ const showEnteringToast = (message = '⚡ ENTERING THE ARENA...') => {
 
 // Trigger function (replaces handlePlay)
 const handlePlay = (e) => {
-  // loading.value = true
-  // e.stopPropagation()
 
-  // // Trigger the toast with burst effect centered on screen
-  // showEnteringToast()
-
-  // // Spawn burst particles at center of screen
-  // spawnBurstAtCenter()
-
-  showModal.value = true
+  savingsPercentage.value = 40
+  router.push('/wheel')
 }
-
-// Helper to spawn burst at screen center (cleaner than fake element)
-// const spawnBurstAtCenter = () => {
-//   const centerX = window.innerWidth / 2
-//   const centerY = window.innerHeight / 2 - 20   // slight offset like before
-
-//   spawnBurst({
-//     getBoundingClientRect: () => ({
-//       left: centerX - 70,
-//       top: centerY - 20,
-//       width: 140,
-//       height: 40,
-//     })
-//   })
-// }
 
 // ======================
 // Particle Burst Effect (Modern Vue-friendly approach)
@@ -135,20 +122,23 @@ const spawnBurstParticles = (el) => {
 //   return savings >= 0 && spending >= 0 && savings + spending === 100
 // })
 
-const openModal = () => {
-  showModal.value = true
-  // Reset values when opening
-  // savingsPercent.value = 40
-  // spendingPercent.value = 60
-  errorMessage.value = ''
-}
+// const openModal = () => {
+//   showModal.value = true
+//   // Reset values when opening
+//   // savingsPercent.value = 40
+//   // spendingPercent.value = 60
+//   errorMessage.value = ''
+// }
 
 const closeModal = () => {
   showModal.value = false
 }
 
 const startGame = () => {
+    savingsPercentage.value = 10
+
   hackStore.setSessionRisk(savingsPercentage.value)
+  hackStore.savingGoal = balance.value * (savingsPercentage.value / 100)
 
   closeModal()
 
@@ -212,9 +202,6 @@ defineExpose({
       "
     ></div>
 
-    
-
-
     <!-- Toast notification -->
     <div>
       <!-- Toast using v-show + transition for smoother animation -->
@@ -267,7 +254,7 @@ defineExpose({
           </div>
           <!-- Play Button inside box -->
           <div id="play-btn">
-            <button class="play-btn-inner" @click="showModal = true">
+            <button class="play-btn-inner" @click="startGame">
               <span class="play-icon"></span>PLAY NOW
             </button>
           </div>
@@ -283,57 +270,62 @@ defineExpose({
 
     <!-- Modal -->
     <Transition name="modal">
-  <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-    <div class="modal-content">
-      <div class="scanlines" aria-hidden="true"/>
+      <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+        <div class="modal-content">
+          <div class="scanlines" aria-hidden="true" />
 
-      <!-- Corner accents via CSS pseudo-elements -->
-      <button class="modal-close" @click="closeModal">✕</button>
+          <!-- Corner accents via CSS pseudo-elements -->
+          <button class="modal-close" @click="closeModal">✕</button>
 
-      <div class="modal-eyebrow">mission briefing</div>
-      <h2>SET YOUR<br/>SESSION LIMIT</h2>
-      <p class="modal-sub">What percent of your paycheck can this session put at risk?</p>
+          <div class="modal-eyebrow">mission briefing</div>
+          <h2>SET YOUR<br />SESSION LIMIT</h2>
+          <p class="modal-sub">What percent of your paycheck can this session put at risk?</p>
 
-      <!-- Slider -->
-      <div class="goal-section">
-        <div class="goal-label">
-          <span>🎯 RISK CAP</span>
-          <span class="goal-value">{{ savingsPercentage }}%</span>
-        </div>
-        <input
-          v-model.number="savingsPercentage"
-          type="range" min="0" max="100"
-          :style="{ background: `linear-gradient(90deg, #00e5ff ${savingsPercentage}%, #1a1a3a ${savingsPercentage}%)` }"
-        />
-        <div class="xp-bar-wrap">
-          <span class="xp-bar-label">PLAYABLE BANKROLL</span>
-          <div class="xp-bar-track">
-            <div class="xp-bar-fill" :style="{ width: savingsPercentage + '%' }"/>
+          <!-- Slider -->
+          <div class="goal-section">
+            <div class="goal-label">
+              <span>🎯 RISK CAP</span>
+              <span class="goal-value">{{ savingsPercentage }}%</span>
+            </div>
+            <input
+              v-model.number="savingsPercentage"
+              type="range"
+              min="0"
+              max="100"
+              :style="{
+                background: `linear-gradient(90deg, #00e5ff ${savingsPercentage}%, #1a1a3a ${savingsPercentage}%)`,
+              }"
+            />
+            <div class="xp-bar-wrap">
+              <span class="xp-bar-label">PLAYABLE BANKROLL</span>
+              <div class="xp-bar-track">
+                <div class="xp-bar-fill" :style="{ width: savingsPercentage + '%' }" />
+              </div>
+            </div>
           </div>
+
+          <!-- Manual input -->
+          <div class="input-group">
+            <label>💾 OR ENTER EXACT %</label>
+            <input
+              v-model.number="savingsPercentage"
+              type="number"
+              min="0"
+              max="100"
+              placeholder="e.g. 40"
+            />
+          </div>
+
+          <p class="modal-sub">
+            Balance: ${{ balance.toFixed(2) }} · Session cap: ${{
+              (balance * (savingsPercentage / 100)).toFixed(2)
+            }}
+          </p>
+
+          <button class="start-game-btn" @click="startGame">▶ &nbsp; ENTER THE ARENA</button>
         </div>
       </div>
-
-      <!-- Manual input -->
-      <div class="input-group">
-        <label>💾 OR ENTER EXACT %</label>
-        <input
-          v-model.number="savingsPercentage"
-          type="number" min="0" max="100"
-          placeholder="e.g. 40"
-        />
-      </div>
-
-      <p class="modal-sub">
-        Balance: ${{ balance.toFixed(2) }} · Session cap:
-        ${{ (balance * (savingsPercentage / 100)).toFixed(2) }}
-      </p>
-
-      <button class="start-game-btn"  @click="startGame">
-        ▶ &nbsp; ENTER THE ARENA
-      </button>
-    </div>
-  </div>
-</Transition>
+    </Transition>
   </main>
 </template>
 
@@ -1029,7 +1021,6 @@ main {
     opacity: 0;
   }
 }
-
 
 /* ── BOTTOM HUD ── */
 #bottom-hud {

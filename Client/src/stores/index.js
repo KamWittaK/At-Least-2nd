@@ -7,6 +7,9 @@ export const useHackStore = defineStore('hack', () => {
   const savings = ref(0)
   const savingPercentage = ref(0)
   const sessionBudget = ref(0)
+  const goalReached = ref(false)
+  const savingGoal = ref(0)
+
   const trashTalks = ref([
     'Broken toaster smarter than you.',
     'Your code slower than Internet Explorer.',
@@ -15,13 +18,13 @@ export const useHackStore = defineStore('hack', () => {
     'Spaghetti has better logic than you.',
   ])
 
-  const savingGoal = computed(() => balance.value * (savingPercentage.value / 100))
+  // const savingGoal = computed(() => balance.value * (savingPercentage.value / 100))
+  
   const availableToPlay = computed(
     () => Math.max(0, sessionBudget.value - savings.value - spendings.value),
   )
   const maxPlayableBet = computed(() => Math.max(0, Math.min(balance.value, availableToPlay.value)))
 
-  const goalReached = computed(() => savings.value >= savingGoal.value)
 
   function roundMoney(amount) {
     return Math.round((Number(amount) || 0) * 100) / 100
