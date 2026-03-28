@@ -42,7 +42,16 @@
         </div>
       </div>
 
-      
+      <!-- ══════════════════════════════════
+           ROULETTE TABLE
+           Reference layout (from image):
+           • 3 rows of numbers, 12 cols wide
+           • Row 1 (top):    3,6,9,12,15,18,21,24,27,30,33,36
+           • Row 2 (middle): 2,5,8,11,14,17,20,23,26,29,32,35
+           • Row 3 (bottom): 1,4,7,10,13,16,19,22,25,28,31,34
+           • Zero left, spans all 3 rows
+           • "2 to 1" right, one per row
+      ═══════════════════════════════════ -->
       <div class="table-wrap">
         <!-- number grid -->
         <div class="num-grid">
@@ -57,7 +66,12 @@
             0<span v-if="getBet('n0') > 0" class="bet-chip">{{ getBet('n0') }}</span>
           </button>
 
-          
+          <!--
+            Numbers placed explicitly with grid-column / grid-row.
+            col = Math.ceil(n/3) + 1   (offset 1 for zero column)
+            row = 4 - ((n-1)%3 + 1)   = 4 - (n-1)%3 - 1 = 3 - (n-1)%3
+                  n=3 → row 1, n=2 → row 2, n=1 → row 3  ✓
+          -->
           <button
             v-for="n in 36"
             :key="n"
@@ -481,7 +495,7 @@ main {
   align-items: center;
   gap: 24px;
   padding: 0 0 48px;
-  padding-top: 110px;
+  padding-top: 80px;
   position: relative;
   overflow-x: hidden;
   font-family: 'Cinzel', serif;

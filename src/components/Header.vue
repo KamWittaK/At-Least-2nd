@@ -22,37 +22,32 @@ const showBubble = ref(true)
 let quipIndex = 0
 let quipTimer = null
 let talkTimer = null
-let cycleController = null
 
-async function cycleQuip(talkingTime) {
-  isTalking.value = true;
-  cycleController?.abort()
-  const controller = new AbortController()
-  cycleController = controller
-
-  const aborted = () => controller.signal.aborted
-
-  // 1. Show bubble and start talking immediately
-  quipIndex = (quipIndex + 1) % quips.length
-  currentQuip.value = quips[quipIndex];
-  showBubble.value = true
-  isTalking.value = true
-
-  // 2. Talk for talkingTime
-  await sleep(talkingTime)
-  if (aborted()) return
-
-  // 3. Stop talking, hide bubble
-  isTalking.value = false
+function cycleQuip(talikingTime) {
+  // 1. hide old bubble, face stays idle
   showBubble.value = false
+  isTalking.value = false
 
-  // 4. Pause before next quip
-  await sleep(400)
-  if (aborted()) return
+  talkTimer = setTimeout(() => {
+    // 2. swap the text and show new bubble
+    quipIndex = (quipIndex + 1) % quips.length
+    currentQuip.value = quips[quipIndex]
+    showBubble.value = true
+
+    // 3. only start talking AFTER bubble is visible
+    setTimeout(() => {
+      isTalking.value = true
+
+      // 4. stop talking after ~2s (bubble has been "read")
+      setTimeout(() => {
+        isTalking.value = false
+      }, talikingTime)
+    }, 50) // tiny tick so the bubble renders before mouth opens
+  }, 400)
 }
 
 onMounted(() => {
-  quipTimer = setInterval(() => cycleQuip(5000), 5000)
+  quipTimer = setInterval(cycleQuip(5000), 5000)
 })
 
 onUnmounted(() => {
