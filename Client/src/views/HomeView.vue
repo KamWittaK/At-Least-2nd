@@ -6,7 +6,18 @@ import { useHackStore } from '../stores/index.js'
 
 const router = useRouter()
 const hackStore = useHackStore()
-const { balance, spendings, savings, savingPercentage, sessionBudget, availableToPlay } =
+const {
+  balance,
+  spendings,
+  savings,
+  savingPercentage,
+  sessionBudget,
+  availableToPlay,
+  investedValue,
+  investmentGainLoss,
+  investmentReturnPercent,
+  lastMarketMove,
+} =
   storeToRefs(hackStore)
 
 // ======================
@@ -246,9 +257,27 @@ defineExpose({
           <div class="stat-value">${{ spendings.toFixed(2) }}</div>
           <div class="stat-label">Spendings</div>
         </div>
-        <div class="stat-item" style="--sd: 1.6s">
-          <div class="stat-value">${{ savings.toFixed(2) }}</div>
-          <div class="stat-label">Savings</div>
+        <div class="stat-item investment-stat" style="--sd: 1.6s">
+          <div class="stat-value">${{ investedValue.toFixed(2) }}</div>
+          <div class="stat-label">Invested Value</div>
+        </div>
+      </div>
+
+      <div class="investment-strip">
+        <div class="investment-copy">
+          <span class="strip-eyebrow">S&P 500 Simulator</span>
+          <strong>House wins are auto-invested after each market tick.</strong>
+        </div>
+        <div class="investment-metrics">
+          <div class="investment-chip" :class="{ up: lastMarketMove > 0, down: lastMarketMove < 0 }">
+            Move {{ lastMarketMove >= 0 ? '+' : '' }}{{ lastMarketMove.toFixed(2) }}%
+          </div>
+          <div class="investment-chip" :class="{ up: investmentGainLoss > 0, down: investmentGainLoss < 0 }">
+            Gain/Loss ${{ investmentGainLoss.toFixed(2) }}
+          </div>
+          <div class="investment-chip">
+            Return {{ investmentReturnPercent >= 0 ? '+' : '' }}{{ investmentReturnPercent.toFixed(2) }}%
+          </div>
         </div>
       </div>
 
@@ -663,8 +692,9 @@ main {
 /* ── STATS BAR ── */
 #stats-bar {
   display: flex;
+  flex-wrap: wrap;
   gap: 24px;
-  margin-bottom: 40px;
+  margin-bottom: 22px;
   animation: titleReveal 1s 0.2s ease-out both;
 }
 
@@ -712,6 +742,67 @@ main {
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.4);
   margin-top: 2px;
+}
+
+.investment-stat .stat-value {
+  color: #73ffb4;
+  text-shadow: 0 0 10px rgba(115, 255, 180, 0.4);
+}
+
+.investment-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 34px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(115, 255, 180, 0.22);
+  background: linear-gradient(135deg, rgba(16, 30, 28, 0.88), rgba(10, 22, 34, 0.92));
+  animation: titleReveal 1s 0.3s ease-out both;
+}
+
+.investment-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.strip-eyebrow {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(115, 255, 180, 0.74);
+}
+
+.investment-copy strong {
+  font-size: 0.98rem;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.investment-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.investment-chip {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.investment-chip.up {
+  color: #7df5b7;
+  border-color: rgba(125, 245, 183, 0.28);
+}
+
+.investment-chip.down {
+  color: #ff9b8e;
+  border-color: rgba(255, 155, 142, 0.3);
 }
 
 /* ── MYSTERY BOX + PLAY BUTTON ── */
