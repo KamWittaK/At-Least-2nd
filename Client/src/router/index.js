@@ -4,6 +4,7 @@ import WheelView from '@/views/WheelView.vue'
 import RoulletGame from '@/views/RoulletGame.vue'
 import BlackJackGame from '@/views/BlackJackGame.vue'
 import OverUnderGame from '@/views/OverUnderGame.vue'
+import Test from '../views/Test.vue'    
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,6 +35,11 @@ const router = createRouter({
       name: 'overunder',
       component: OverUnderGame,
     },
+    {
+      path: '/test',
+      name: 'test',
+      component: Test,
+    }
   ],
 })
 
