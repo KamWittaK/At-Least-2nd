@@ -1,5 +1,5 @@
 <script setup>
-import { useHackStore } from '../stores/index.js'
+import { useHackStore } from '@/stores'
 import { useRoute, useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted } from 'vue'
 
@@ -7,42 +7,61 @@ const hackStore = useHackStore()
 const route = useRoute()
 const router = useRouter()
 
-// AI character quips that cycle automatically
-const quips = [
-  "Broken toaster smarter than you.",
-  "Your code slower than Internet Explorer.",
-  "Your code is a rust bucket.",
-  "Kindergarten coders outperform your skills.",
-  "Spaghetti has better logic than you."
-]
-
-const currentQuip = ref(hackStore.trashTalks[0])
+const currentQuip = ref('')
 const isTalking = ref(false)
 const showBubble = ref(true)
-let quipIndex = 0
-let quipTimer = null
-let talkTimer = null
+let cycleController = null
 
-function cycleQuip() {
-  // trigger talking animation
-  isTalking.value = true
-  showBubble.value = false
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
-  talkTimer = setTimeout(() => {
-    quipIndex = (quipIndex + 1) % quips.length
-    currentQuip.value = quips[quipIndex]
-    showBubble.value = true
-    setTimeout(() => { isTalking.value = false }, 800)
-  }, 400)
+async function fetchQuip() {
+  // TODO: replace with actual API call
+  // const response = await fetch('/api/trashtalk')
+  // const data = await response.json()
+  // return data.text
+
+  const quips = [
+    "Broken toaster smarter than you.",
+    "Your code slower than Internet Explorer.",
+    "Your code is a rust bucket.",
+    "Kindergarten coders outperform your skills.",
+    "Spaghetti has better logic than you."
+  ]
+  return quips[Math.floor(Math.random() * quips.length)]
+}
+
+async function cycleQuip(talkingTime) {
+  cycleController?.abort()
+  const controller = new AbortController()
+  cycleController = controller
+  const aborted = () => controller.signal.aborted
+
+  while (!aborted()) {
+    // 1. Fetch new quip from API
+    const quip = await fetchQuip()
+    if (aborted()) break
+
+    // 2. Assign text and start talking
+    currentQuip.value = quip
+    isTalking.value = true
+
+    // 3. Talk for talkingTime (character mimics reading)
+    await sleep(talkingTime)
+    if (aborted()) break
+
+    // 4. Stop talking, pause briefly before next fetch
+    isTalking.value = false
+    await sleep(1000)
+    if (aborted()) break
+  }
 }
 
 onMounted(() => {
-  quipTimer = setInterval(cycleQuip, 5000)
+  cycleQuip(5000)
 })
 
 onUnmounted(() => {
-  clearInterval(quipTimer)
-  clearTimeout(talkTimer)
+  cycleController?.abort()
 })
 </script>
 
@@ -52,7 +71,7 @@ onUnmounted(() => {
 
     <div id="hud-right">
       <!-- ── AI Character ── -->
-      <div v-show="route.path.includes('games')" id="ai-character">
+      <div v-if="route.path.includes('games')" id="ai-character">
         <!-- Speech bubble -->
         <Transition name="bubble">
           <div v-if="showBubble" class="speech-bubble">
