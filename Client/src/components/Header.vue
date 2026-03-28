@@ -26,9 +26,6 @@ const marketMoveClass = computed(() =>
     <div id="hud-right">
       <div v-if="route.path.includes('games')" id="ai-character">
         <Transition name="bubble">
-          <div v-if="showBubble" class="speech-bubble">
-            <div class="bubble-text">{{ currentQuip }}</div>
-          </div>
         </Transition>
 
         <div class="char-wrap" :class="{ talking: isCharacterTalking }">
