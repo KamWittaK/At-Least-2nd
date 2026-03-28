@@ -1,0 +1,23 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --gold: #ffd700;
+  --gold-dim: #b8960c;
+  --cyan: #00f5ff;
+  --cyan-dim: #007a80;
+  --purple: #8b2fc9;
+  --purple-bright: #c060ff;
+  --red: #ff3a3a;
+  --dark: #05040e;
+  --dark2: #0c0a1e;
+  --dark3: #130f2a;
+  --panel: rgba(255, 255, 255, 0.04);
+  --border: rgba(255, 255, 255, 0.08);
+}
+
