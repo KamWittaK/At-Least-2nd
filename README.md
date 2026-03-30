@@ -73,6 +73,7 @@ Losses are redirected into an S&P 500-style investment simulation, building long
 - Vite
 - Pinia (state management)
 - JavaScript
+- FastAPI
 
 ---
 
